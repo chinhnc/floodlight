@@ -708,7 +708,6 @@ public class TopologyInstance {
                     }
                 }
             }
-//            log.info("4234234fsdfsdf LinkCost {}", linkCost);
             return linkCost;
 
         case LINK_SPEED:
@@ -826,7 +825,7 @@ public class TopologyInstance {
                 	for (DatapathId dst : dstSws) {
             			if(listSwitch.contains(dst.toString())) {
             				Map<Link, Integer> linkDelay = initLinkCostMap();
-                            Map<Link, Integer> linkCost = caculateCost();
+                            Map<Link, Integer> linkCost = caculateCost("GET_COST");
                             Long deltaDelay = TopologyManager.getDeltaDelay();
                             paths = larac(src, dst, linkCost, linkDelay, deltaDelay);
                                                     
@@ -839,28 +838,7 @@ public class TopologyInstance {
                 }
             }
             
-            //**** END
-//            for (DatapathId src : srcSws) { /* permute all member switches */
-//                for (DatapathId dst : dstSws) {
-////                    log.debug("Calling Yens {} {}", src, dst);
-////                    paths = yens(src, dst, TopologyManager.getMaxPathsToComputeInternal(),getArchipelago(src), getArchipelago(dst));
-//                    
-//                    
-//                    /*===== Viet them Goi thuat toan LARAC =====*/
-//                    
-//                    Map<Link, Integer> linkDelay = initLinkCostMap();
-//                    Map<Link, Integer> linkCost = caculateCost();
-//                    Long deltaDelay = 1000L;
-//                    paths = larac(src, dst, linkCost, linkDelay, deltaDelay);
-//                    
-//                    /*=== END ===*/
-//                    
-//                    pathId = new PathId(src, dst);
-//                    pathcache.put(pathId, paths);
-//                    log.debug("Adding paths {}", paths);
-//                    log.info("Adding paths {}", paths);
-//                }
-//            }
+
             
         }
     }
@@ -987,7 +965,6 @@ public class TopologyInstance {
                                 setPathCosts(pd);
                                 A.add(pd);
                                 log.debug("Found shortest path in LARAC {}", pd);
-//                                log.info("Found shortest path in LARAC with LAMBDA {}", pd);
                                 
                                 //Set the route counts
                                 for (Path path : A) {
@@ -1021,6 +998,108 @@ public class TopologyInstance {
         }
     }
     /*=== END LARAC ===*/
+    
+    /* Viet them
+     * Thuat toan duong di ngan nhat
+     * 
+     * 
+     * 
+     * Thuat toan 2:
+     * 
+     * First, the routing algorithm calculates the shortest path for the first metric (i.e. cost), 
+     * and then checks whether it can guarantee all the other QoS requirements. 
+     * If the path failed, the algorithm tries to find another one for the next metric, 
+     * until an appropriate path is found, or the routing fails for all the metrics
+     */
+    private List<Path> considerEachMetric(DatapathId src, DatapathId dst, Long deltaDelay) {
+    	Map<DatapathId, Set<Link>> linkDpidMap = buildLinkDpidMap(switches, portsWithLinks, links);
+        Map<DatapathId, Set<Link>> copyOfLinkDpidMap = new HashMap<DatapathId, Set<Link>>(linkDpidMap);
+        
+        String[] METRIC = {"LOSS", "HOPCOUNT", "BANDWIDTH", "DELAY"};
+        
+        List<Path> A = new ArrayList<Path>();
+        
+        Archipelago aSrc = getArchipelago(src);
+        Archipelago aDst = getArchipelago(dst);
+        
+        /* The switch is not a member of an archipelago. It must not be connected */
+        if (aSrc == null || aDst == null) {
+            log.warn("One or more switches not connected. Cannot compute path b/t {} and {}", src, dst);
+            return A;
+        }
+        
+        if (!aSrc.equals(aDst)) {
+            log.warn("Switches {} and {} not in same archipelago. Cannot compute path", src, dst);
+            return A;
+        }
+        
+        for(int i = 0; i < METRIC.length; i++) {
+        	Map<Link, Integer> metric = caculateCost(METRIC[i]);
+        	
+        	 BroadcastTree bt = dijkstra(copyOfLinkDpidMap, dst, metric, true);
+             aSrc.setBroadcastTree(bt);
+             Path newpath = buildPath(new PathId(src, dst), bt); /* guaranteed to be in same tree */
+             
+             if (newpath != null && !newpath.getPath().isEmpty()) {
+            	 setPathCosts(newpath);
+                 if (newpath.getLatency().getValue() <= deltaDelay) {
+                 	A.add(newpath);
+                 	log.debug("Found shortest path in Consider Each Metric {}", newpath);
+                 	
+                 	//Set the route counts
+                     for (Path path : A) {
+                         path.setPathIndex(A.indexOf(path));
+                     }
+                     
+                 	return A;
+                 }
+             } else {
+            	 log.debug("No paths found in Consider Each Metric with {}", METRIC[i]);
+            	 metric.clear();
+             }
+        }
+        
+        log.debug("No paths found in Consider Each Metric's!");
+        return A;
+    }
+    /****** END *****/
+    
+    
+    /* Viet them
+     * Thuat toan tim duong di ngan nhat
+     * 
+     * 
+     * 
+     * Thuat toan 3:
+     * 
+     * A simple shortest-path algorithm based on a single cost aggregated as a combination of weighted QoS parameters. 
+     * The main drawback of this solution is that the result is quite sensitive to the selected aggregating weights 
+     */
+    private List<Path> costAggregated(DatapathId src, DatapathId dst, Map<Link, Integer> cost, Long deltaDelay) {
+    	Map<DatapathId, Set<Link>> linkDpidMap = buildLinkDpidMap(switches, portsWithLinks, links);
+        Map<DatapathId, Set<Link>> copyOfLinkDpidMap = new HashMap<DatapathId, Set<Link>>(linkDpidMap);
+        
+        List<Path> A = new ArrayList<Path>();
+        
+        Archipelago aSrc = getArchipelago(src);
+        Archipelago aDst = getArchipelago(dst);
+        
+        /* The switch is not a member of an archipelago. It must not be connected */
+        if (aSrc == null || aDst == null) {
+            log.warn("One or more switches not connected. Cannot compute path b/t {} and {}", src, dst);
+            return A;
+        }
+        
+        if (!aSrc.equals(aDst)) {
+            log.warn("Switches {} and {} not in same archipelago. Cannot compute path", src, dst);
+            return A;
+        }
+        
+        return A;
+    }
+    /****** END *****/
+    
+    
     
     /*===== Viet them function tinh Cost cua path (duong di) =====*/
     public Integer getPathCosts(Path p) {
@@ -1058,31 +1137,134 @@ public class TopologyInstance {
     /*=== END ===*/
     
     /*===== Viet them function Map cost vao tung Link =====*/
-    public Map<Link,Integer> caculateCost() {
+    public Map<Link,Integer> caculateCost(String nameMetric) {
         Map<Link, Integer> linkCost = new HashMap<Link, Integer>();    
         
         linkCostsRF = ReadFile.getLinkCostsFromFile();
         
-        for (NodePortTuple npt : links.keySet()) {
-            if (links.get(npt) == null) {
-                continue;
-            }            
-            for (Link link : links.get(npt)) {
-        
-            	if (link == null) {
-                    continue;
-                }
-            	for (LinkCost ls: linkCostsRF) {
-        			if (link.getSrc().toString().equals(ls.getSrc()) && link.getDst().toString().equals(ls.getDst())) {
-        				linkCost.put(link, ls.getCosts());
-        			} else if (link.getSrc().toString().equals(ls.getDst()) && link.getDst().toString().equals(ls.getSrc())) {
-        				linkCost.put(link, ls.getCosts());
-        			}
-        		}
-            }
+        switch (nameMetric){
+	        case "HOPCOUNT":
+	            log.debug("Using hop count w/o tunnel bias for metrics");
+	            for (NodePortTuple npt : links.keySet()) {
+	                if (links.get(npt) == null) {
+	                    continue;
+	                }
+	                for (Link link : links.get(npt)) {
+	                    if (link == null) {
+	                        continue;
+	                    }
+	                    linkCost.put(link,1);
+	                }
+	            }
+	            return linkCost;
+	
+	        case "DELAY":
+	            log.debug("Using delay for path metrics");
+	            for (NodePortTuple npt : links.keySet()) {
+	                if (links.get(npt) == null) {
+	                    continue;
+	                }            
+	                for (Link link : links.get(npt)) {
+	            
+	                	if (link == null) {
+	                        continue;
+	                    }
+	                	for (LinkCost ls: linkCostsRF) {
+	            			if (link.getSrc().toString().equals(ls.getSrc()) && link.getDst().toString().equals(ls.getDst())) {
+	            				linkCost.put(link, ls.getDelay());
+	            			} else if (link.getSrc().toString().equals(ls.getDst()) && link.getDst().toString().equals(ls.getSrc())) {
+	            				linkCost.put(link, ls.getDelay());
+	            			}
+	            		}
+	                }
+	            }
+	            return linkCost;
+	
+	        case "BANDWIDTH":
+	        	log.debug("Using bandwidth for path metrics");
+	        	for (NodePortTuple npt : links.keySet()) {
+	                if (links.get(npt) == null) {
+	                    continue;
+	                }            
+	                for (Link link : links.get(npt)) {
+	            
+	                	if (link == null) {
+	                        continue;
+	                    }
+	                	for (LinkCost ls: linkCostsRF) {
+	            			if (link.getSrc().toString().equals(ls.getSrc()) && link.getDst().toString().equals(ls.getDst())) {
+	            				linkCost.put(link, ls.getBw());
+	            			} else if (link.getSrc().toString().equals(ls.getDst()) && link.getDst().toString().equals(ls.getSrc())) {
+	            				linkCost.put(link, ls.getBw());
+	            			}
+	            		}
+	                }
+	            }
+	            return linkCost;
+	            
+	        case "LOSS":
+	        	log.debug("Using loss for path metrics");
+	        	for (NodePortTuple npt : links.keySet()) {
+	                if (links.get(npt) == null) {
+	                    continue;
+	                }            
+	                for (Link link : links.get(npt)) {
+	            
+	                	if (link == null) {
+	                        continue;
+	                    }
+	                	for (LinkCost ls: linkCostsRF) {
+	            			if (link.getSrc().toString().equals(ls.getSrc()) && link.getDst().toString().equals(ls.getDst())) {
+	            				linkCost.put(link, ls.getLoss());
+	            			} else if (link.getSrc().toString().equals(ls.getDst()) && link.getDst().toString().equals(ls.getSrc())) {
+	            				linkCost.put(link, ls.getLoss());
+	            			}
+	            		}
+	                }
+	            }
+	            return linkCost;
+	        case "GET_COST":
+	        	log.debug("Using total cost for path metrics");
+	        	for (NodePortTuple npt : links.keySet()) {
+	                if (links.get(npt) == null) {
+	                    continue;
+	                }            
+	                for (Link link : links.get(npt)) {
+	            
+	                	if (link == null) {
+	                        continue;
+	                    }
+	                	for (LinkCost ls: linkCostsRF) {
+	            			if (link.getSrc().toString().equals(ls.getSrc()) && link.getDst().toString().equals(ls.getDst())) {
+	            				linkCost.put(link, ls.getCosts());
+	            			} else if (link.getSrc().toString().equals(ls.getDst()) && link.getDst().toString().equals(ls.getSrc())) {
+	            				linkCost.put(link, ls.getCosts());
+	            			}
+	            		}
+	                }
+	            }
+	            return linkCost;
+	
+	        default:
+	        	log.debug("Using latency for path metrics");
+	            for (NodePortTuple npt : links.keySet()) {
+	                if (links.get(npt) == null) {
+	                    continue;
+	                }
+	                for (Link link : links.get(npt)) {
+	                    if (link == null) {
+	                        continue;
+	                    }
+	                    if ((int)link.getLatency().getValue() < 0 || 
+	                            (int)link.getLatency().getValue() > MAX_LINK_WEIGHT) {
+	                        linkCost.put(link, MAX_LINK_WEIGHT);
+	                    } else {
+	                        linkCost.put(link,(int)link.getLatency().getValue());
+	                    }
+	                }
+	            }
+	            return linkCost;
         }
-                
-        return linkCost;
     }
     /*=== END ===*/
     
@@ -1270,12 +1452,9 @@ public class TopologyInstance {
         log.debug("YENS ALGORITHM -----------------");
 //        log.debug("Asking for paths from {} to {}", src, dst);
 //        log.debug("Asking for {} paths", K);
-//        log.info("Asking for paths from {} to {}", src, dst);
-//        log.info("Asking for {} paths", K);
 
         // Find link costs
         Map<Link, Integer> linkCost = initLinkCostMap();
-//        Map<Link, Integer> linkCost = caculateCost();
 
         Map<DatapathId, Set<Link>> linkDpidMap = buildLinkDpidMap(switches, portsWithLinks, links);
 
@@ -1314,9 +1493,6 @@ public class TopologyInstance {
             setPathCosts(newroute);
             A.add(newroute);
             log.debug("Found shortest path in Yens {}", newroute);
-            // log.info("Found shortest path in Yens {}", newroute);
-//            log.info("A truoc vong lap: {}", A);
-
         }
         else {
             log.debug("No paths found in Yen's!");
@@ -1426,9 +1602,6 @@ public class TopologyInstance {
                 log.debug("removeShortestPath returned {}", shortestPath);
             }
         }
-
-//        log.info("A sau vong lap: {}", A);
-
 
         // Set the route counts
         for (Path path : A) {
