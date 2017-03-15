@@ -870,7 +870,7 @@ public class TopologyInstance {
      * c : desired cost of the path
      */
     private List<Path> larac(DatapathId src, DatapathId dst,
-    		Map<Link, Integer> cost, Map<Link, Integer> delay, Long deltaDelay) {
+    	Map<Link, Integer> cost, Map<Link, Integer> delay, Long deltaDelay) {
         Map<DatapathId, Set<Link>> linkDpidMap = buildLinkDpidMap(switches, portsWithLinks, links);
         Map<DatapathId, Set<Link>> copyOfLinkDpidMap = new HashMap<DatapathId, Set<Link>>(linkDpidMap);
         
@@ -1095,6 +1095,27 @@ public class TopologyInstance {
             return A;
         }
         
+        BroadcastTree bt = dijkstra(copyOfLinkDpidMap, dst, cost, true);
+        aSrc.setBroadcastTree(bt);
+        Path newpath = buildPath(new PathId(src, dst), bt); /* guaranteed to be in same tree */
+
+        if (newpath != null && !newpath.getPath().isEmpty()) {
+            setPathCosts(newpath);
+            if (newpath.getLatency().getValue() <= deltaDelay) {
+                A.add(newpath);
+                log.debug("Found shortest path in costAggregated {}", newpath);
+            
+                //Set the route counts
+                for (Path path : A) {
+                    path.setPathIndex(A.indexOf(path));
+                }
+             
+                return A;
+            }
+        } else {
+            log.debug("No paths found in costAggregated from {} to {}", src, dst);
+        }
+
         return A;
     }
     /****** END *****/
