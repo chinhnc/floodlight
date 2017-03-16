@@ -103,8 +103,6 @@ import org.projectfloodlight.openflow.protocol.match.MatchField;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-//// Viet them add packet read file
-//import readfile.*;
 
 /**
  * This class sends out LLDP messages containing the sending switch's datapath
@@ -216,9 +214,6 @@ IFloodlightModule, IInfoProvider {
 	 */
 	protected Map<Link, LinkInfo> links;
 	
-//	// Viet them Khoi tao list Link tu doc File
-//	protected ArrayList<LinkCost> linkCostsRF = new ArrayList<LinkCost>(); 
-
 	/**
 	 * Map from switch id to a set of all links with it as an endpoint
 	 */
@@ -780,31 +775,10 @@ IFloodlightModule, IInfoProvider {
 		if (log.isTraceEnabled()) {
 			log.trace("COMPUTING FINAL DATAPLANE LATENCY: Current time {}; Dataplane+{} latency {}; Overall latency from {} to {} is {}", 
 					new Object[] { time, iofSwitch.getId(), timestamp, remoteSwitch.getId(), iofSwitch.getId(), String.valueOf(latency.getValue()) });
-		}
-		log.info("COMPUTING FINAL DATAPLANE LATENCY: Overall latency from {} to {} is {}", 
-				new Object[] {remoteSwitch.getId(), iofSwitch.getId(), String.valueOf(latency.getValue()) });
+		} 
+
 		Link lt = new Link(remoteSwitch.getId(), remotePort,
 				iofSwitch.getId(), inPort, latency);
-		
-		/*  Viet them
-		 *  Check link va add them cost vao link (mac dinh costs = 10000)
-		 */
-//		Link lt = new Link(remoteSwitch.getId(), remotePort,
-//				iofSwitch.getId(), inPort, latency, 10000);
-//		
-//		for (LinkCost ls: linkCostsRF) {
-//			if (remoteSwitch.getId().toString().equals(ls.getSrc()) && iofSwitch.getId().toString().equals(ls.getDst())) {
-//				lt.setLinkCosts(ls.getCosts());
-//			} else if (remoteSwitch.getId().toString().equals(ls.getDst()) && iofSwitch.getId().toString().equals(ls.getSrc())) {
-//				lt.setLinkCosts(ls.getCosts());
-//			}
-//		}
-		
-		//log.info("ahihi: {} -> {}: ", lt.getSrc(), lt.getDst());
-		//log.info("ahihi-linkcosts: {}",lt.getLinkCosts());
-		//log.info("ahihi-link: {}", lt);
-		
-		/*=== End ===*/
 		
 		if (!isLinkAllowed(lt.getSrc(), lt.getSrcPort(),
 				lt.getDst(), lt.getDstPort()))
@@ -2041,9 +2015,6 @@ IFloodlightModule, IInfoProvider {
 		this.maintenanceQueue = new LinkedBlockingQueue<NodePortTuple>();
 		this.toRemoveFromQuarantineQueue = new LinkedBlockingQueue<NodePortTuple>();
 		this.toRemoveFromMaintenanceQueue = new LinkedBlockingQueue<NodePortTuple>();
-		
-//		// Viet them Goi ham doc file va luu vao linkCostsRF
-//		this.linkCostsRF = ReadFile.getLinkCostsFromFile();
 
 		this.ignoreMACSet = Collections.newSetFromMap(
 				new ConcurrentHashMap<MACRange,Boolean>());
