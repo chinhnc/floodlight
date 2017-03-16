@@ -2,11 +2,13 @@
 *.class
 .classpath
 .project
+
 .settings/
 .pydevproject
 .settings
 .DS_Store
 target
+target/*
 *.swp
 *.pyc
 findbugs-results
