@@ -7,12 +7,13 @@ import java.io.IOException;
 import java.util.ArrayList;
 
 public class ReadFile {
-	static String nameFile = "topoNNT.txt";
+	static String nameFile = "testTopo.txt";
 	
 	public static ArrayList<LinkCost> getLinkCostsFromFile() {
 		
 		ArrayList<LinkCost> linkCosts = new ArrayList<LinkCost>();
 		int min_bw = 0;
+		int max_delay = 0;
 		int max_loss = 0;
 		int costs = 0;
 		int tmp = 0;
@@ -40,7 +41,12 @@ public class ReadFile {
 					if (bandwidth < min_bw) {
 						min_bw = bandwidth;
 					}
-					
+					//Get Delay
+					String dl = content[3].replace("delay=", "").replace("ms", "");
+					int delay = Integer.parseInt(dl);
+					if(delay > max_delay) {
+						max_delay = delay;
+					}
 					//Get Loss	
 					String lost = content[4].replace("loss=", "");
 					int loss = Integer.parseInt(lost);
@@ -48,7 +54,7 @@ public class ReadFile {
 						max_loss = loss;
 					}
 					
-					LinkCost lt = new LinkCost(content[0], content[1], bandwidth, loss);
+					LinkCost lt = new LinkCost(content[0], content[1], bandwidth, delay, loss);
 					
 					linkCosts.add(lt);
 				}
