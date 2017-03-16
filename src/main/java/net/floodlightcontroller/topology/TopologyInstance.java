@@ -791,7 +791,8 @@ public class TopologyInstance {
         
         //**** Viet them Get list Switch link to Host   
         ArrayList<String> listSwitch = TopologyManager.getListSwitch();
-		Map<Link, Integer> linkDelay = initLinkCostMap();
+//        Long deltaDelay = TopologyManager.getDeltaDelay();
+        Long deltaDelay = 500L;
         
         listHostsRF = ReadFile.getListHostsFromFile();
         
@@ -820,38 +821,38 @@ public class TopologyInstance {
 //            	}
 //            }
             
-            for (DatapathId src : srcSws) { /* permute all member switches */
-            	for (ListHost lhostSrc : listHostsRF) {
-            		if(lhostSrc.getSwitch().equals(src.toString())) {
-            			for (DatapathId dst : dstSws) {
-            				for(ListHost lhostDst : listHostsRF) {
-            					if(lhostDst.getSwitch().equals(dst.toString())) {
-            						Long deltaDelay = TopologyManager.getDeltaDelay();
-                    				//=====LARAC==========
-                    				Map<Link, Integer> linkCost = caculateCost("GET_COST");
-                                    paths = larac(src, dst, linkCost, linkDelay, deltaDelay);
-                                    
-                                    //=======Consider each metric===============
-//                                    paths = considerEachMetric(src, dst, deltaDelay=1000L);
-                                    
-                                    //=======Cost aggregated====================
-//                                    Map<Link, Integer> linkCost = caculateCost("GET_COST");
-//                                    paths = costAggregated(src, dst, linkCost, deltaDelay=1000L);
-                                    
-                                    //=====================================
-                                    pathId = new PathId(src, dst);
-                                    pathcache.put(pathId, paths);
-                                    log.debug("Adding paths {}", paths);
-                                    log.info("Adding paths {}", paths);
-            					}
-            				}
-            			}
-            		}
-            	}
-            }
-            
-            
 //            for (DatapathId src : srcSws) { /* permute all member switches */
+//            	for (ListHost lhostSrc : listHostsRF) {
+//            		if(lhostSrc.getSwitch().equals(src.toString())) {
+//            			for (DatapathId dst : dstSws) {
+//            				for(ListHost lhostDst : listHostsRF) {
+//            					if(lhostDst.getSwitch().equals(dst.toString())) {
+//                    				//=====LARAC==========
+//                    				Map<Link, Integer> linkCost = caculateCost("GET_COST");
+//                    				Map<Link, Integer> linkDelay = initLinkCostMap();
+//                                    paths = larac(src, dst, linkCost, linkDelay, deltaDelay);
+//                                    
+//                                    //=======Consider each metric===============
+////                                    paths = considerEachMetric(src, dst, deltaDelay=1000L);
+//                                    
+//                                    //=======Cost aggregated====================
+////                                    Map<Link, Integer> linkCost = caculateCost("GET_COST");
+////                                    paths = costAggregated(src, dst, linkCost, deltaDelay=1000L);
+//                                    
+//                                    //=====================================
+//                                    pathId = new PathId(src, dst);
+//                                    pathcache.put(pathId, paths);
+//                                    log.debug("Adding paths {}", paths);
+//                                    log.info("Adding paths {}", paths);
+//            					}
+//            				}
+//            			}
+//            		}
+//            	}
+//            }
+            
+            
+//            for (DatapathId src : srcSws) {
 //                if(listSwitch.contains(src.toString())) {
 //                	for (DatapathId dst : dstSws) {
 //            			if(listSwitch.contains(dst.toString())) {
@@ -876,6 +877,36 @@ public class TopologyInstance {
 //                    }
 //                }
 //            }
+            
+            // vong for de tinh toan thong so
+            int count_switchs = 0;
+            for (DatapathId src : srcSws) {
+              	for (DatapathId dst : dstSws) {
+              		//=====LARAC==========
+      				Map<Link, Integer> linkCost = caculateCost("GET_COST");
+      				Map<Link, Integer> linkDelay = initLinkCostMap();
+                    paths = larac(src, dst, linkCost, linkDelay, deltaDelay);
+                      
+                    //=======Consider each metric===============
+//                      paths = considerEachMetric(src, dst, deltaDelay=1000L);
+                      
+                    //=======Cost aggregated====================
+//                      Map<Link, Integer> linkCost = caculateCost("GET_COST");
+//                      paths = costAggregated(src, dst, linkCost, deltaDelay=1000L);
+                      
+                    //=====================================
+                    
+                    // tinh toan thong so 
+                    if (paths.isEmpty() && !(src.equals(dst))) count_switchs += 1;
+                    
+                    pathId = new PathId(src, dst);
+                    pathcache.put(pathId, paths);
+                    log.debug("Adding paths {}", paths);
+                    log.info("Adding paths {}", paths);
+  				}
+            }
+            
+            log.info("So switch khong dc ket noi trung binh voi delta delay {} la {}", deltaDelay, (count_switchs));
         }
     }
     
