@@ -231,9 +231,9 @@ ITopologyManagerBackend, ILinkDiscoveryListener, IOFMessageListener {
 //                    }
 //            	}
         		
-            	String[] hosts = OutputRequest.getInputFromKeyBoard();
-        		deltaDelay = Long.parseLong(hosts[2]);
-            	getListSwitch(hosts[0],hosts[1]);
+//            	String[] hosts = OutputRequest.getInputFromKeyBoard();
+//        		deltaDelay = Long.parseLong(hosts[2]);
+//            	getListSwitch(hosts[0],hosts[1]);
             	//*** END
                 if (floodlightProviderService.getRole() != HARole.STANDBY) {
                     newInstanceTask.reschedule(TOPOLOGY_COMPUTE_INTERVAL_MS, TimeUnit.MILLISECONDS);

@@ -7,7 +7,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 
 public class ReadFile {
-	static String nameFile = "topoNNT.txt";
+	static String nameFile = "topoCost.txt";
 	
 	public static ArrayList<LinkCost> getLinkCostsFromFile() {
 		

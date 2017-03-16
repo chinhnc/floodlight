@@ -89,7 +89,7 @@ public class TopologyInstance {
     
  //**** Viet them Khoi tao list Link tu doc File
  	protected ArrayList<LinkCost> linkCostsRF = new ArrayList<LinkCost>(); 
-// 	protected ArrayList<ListHost> listHostsRF = new ArrayList<ListHost>();
+ 	protected ArrayList<ListHost> listHostsRF = new ArrayList<ListHost>();
 
 
     protected TopologyInstance(Map<DatapathId, Set<OFPort>> portsWithLinks,
@@ -790,9 +790,10 @@ public class TopologyInstance {
         pathcache.clear();
         
         //**** Viet them Get list Switch link to Host   
-        ArrayList<String> listSwitch = TopologyManager.getListSwitch();
-        
-//        listHostsRF = ReadFile.getListHostsFromFile();
+//        ArrayList<String> listSwitch = TopologyManager.getListSwitch();
+//      Long deltaDelay = TopologyManager.getDeltaDelay();
+        listHostsRF = ReadFile.getListHostsFromFile();
+        Long deltadelay = 1000L;
         
         for (Archipelago a : archipelagos) { /* for each archipelago */
             Set<DatapathId> srcSws = a.getSwitches();
@@ -820,22 +821,48 @@ public class TopologyInstance {
 //            	}
 //            }
             
+//			for (DatapathId src : srcSws) { /* permute all member switches */
+//			    if(listSwitch.contains(src.toString())) {
+//			    	for (DatapathId dst : dstSws) {
+//						if(listSwitch.contains(dst.toString())) {
+//							Map<Link, Integer> linkDelay = initLinkCostMap();
+//			                
+//			                paths = larac(src, dst, linkCost, linkDelay, deltaDelay);
+//			                                        
+//			                pathId = new PathId(src, dst);
+//			                pathcache.put(pathId, paths);
+//			                log.debug("Adding paths {}", paths);
+//			                log.info("Adding paths {}", paths);
+//						}
+//			        }
+//			    }
+//			}
+            
             for (DatapathId src : srcSws) { /* permute all member switches */
-                if(listSwitch.contains(src.toString())) {
-                	for (DatapathId dst : dstSws) {
-            			if(listSwitch.contains(dst.toString())) {
-            				Map<Link, Integer> linkDelay = initLinkCostMap();
-                            Map<Link, Integer> linkCost = caculateCost("GET_COST");
-                            Long deltaDelay = TopologyManager.getDeltaDelay();
-                            paths = larac(src, dst, linkCost, linkDelay, deltaDelay);
-                                                    
-                            pathId = new PathId(src, dst);
-                            pathcache.put(pathId, paths);
-                            log.debug("Adding paths {}", paths);
-//                            log.info("Adding paths {}", paths);
+            	for (ListHost lhostSrc : listHostsRF) {
+            		if(lhostSrc.getSwitch().equals(src.toString())) {
+            			for (DatapathId dst : dstSws) {
+            				for(ListHost lhostDst : listHostsRF) {
+            					if(lhostDst.getSwitch().equals(dst.toString())) {
+            						//**** Thuat toan LARAC
+//            						Map<Link, Integer> linkCost = caculateCost("GET_COST");
+//            						paths = larac(src, dst, linkCost, linkDelay, deltaDelay);
+            						//**** Thuat toan 2
+//            						paths = considerEachMetric(src, dst, deltadelay);
+            						//**** Thuat toan 3
+            						Map<Link, Integer> linkCost = caculateCost("GET_COST");
+            						paths = costAggregated(src, dst, linkCost, deltadelay);
+            						//END
+                                                        
+            						pathId = new PathId(src, dst);
+            						pathcache.put(pathId, paths);
+            						log.debug("Adding paths {}", paths);
+            						log.info("Adding paths {}", paths);
+            					}
+            				}
             			}
-                    }
-                }
+            		}
+            	}
             }
             
 
@@ -1015,7 +1042,7 @@ public class TopologyInstance {
     	Map<DatapathId, Set<Link>> linkDpidMap = buildLinkDpidMap(switches, portsWithLinks, links);
         Map<DatapathId, Set<Link>> copyOfLinkDpidMap = new HashMap<DatapathId, Set<Link>>(linkDpidMap);
         
-        String[] METRIC = {"LOSS", "HOPCOUNT", "BANDWIDTH", "DELAY"};
+        String[] METRIC = {"LOSS", "HOPCOUNT", "DELAY"};
         
         List<Path> A = new ArrayList<Path>();
         
@@ -1034,31 +1061,33 @@ public class TopologyInstance {
         }
         
         for(int i = 0; i < METRIC.length; i++) {
+        	log.info("----------- ******* -------- {}", i);
         	Map<Link, Integer> metric = caculateCost(METRIC[i]);
         	
-        	 BroadcastTree bt = dijkstra(copyOfLinkDpidMap, dst, metric, true);
-             aSrc.setBroadcastTree(bt);
-             Path newpath = buildPath(new PathId(src, dst), bt); /* guaranteed to be in same tree */
-             
-             if (newpath != null && !newpath.getPath().isEmpty()) {
-            	 setPathCosts(newpath);
-                 if (newpath.getLatency().getValue() <= deltaDelay) {
-                 	A.add(newpath);
-                 	log.debug("Found shortest path in Consider Each Metric {}", newpath);
-                 	
-                 	//Set the route counts
-                     for (Path path : A) {
-                         path.setPathIndex(A.indexOf(path));
-                     }
-                     
-                 	return A;
-                 }
-             } else {
-            	 log.debug("No paths found in Consider Each Metric with {}", METRIC[i]);
-            	 metric.clear();
-             }
+        	BroadcastTree bt = dijkstra(copyOfLinkDpidMap, dst, metric, true);
+        	aSrc.setBroadcastTree(bt);
+        	Path newpath = buildPath(new PathId(src, dst), bt); /* guaranteed to be in same tree */
+ 
+        	if (newpath != null && !newpath.getPath().isEmpty()) {
+        		setPathCosts(newpath);
+        		
+        		if (newpath.getLatency().getValue() <= deltaDelay) {
+        			A.add(newpath);
+        			log.debug("Found shortest path in Consider Each Metric {}", newpath);
+     	
+        			//Set the route counts
+        			for (Path path : A) {
+        				path.setPathIndex(A.indexOf(path));
+        			}
+         
+        			return A;
+        		}
+        	} else {
+        		log.debug("No paths found in Consider Each Metric with {}", METRIC[i]);
+        		metric.clear();
+        	}
         }
-        
+
         log.debug("No paths found in Consider Each Metric's!");
         return A;
     }
@@ -1095,6 +1124,27 @@ public class TopologyInstance {
             return A;
         }
         
+        BroadcastTree bt = dijkstra(copyOfLinkDpidMap, dst, cost, true);
+        aSrc.setBroadcastTree(bt);
+        Path newpath = buildPath(new PathId(src, dst), bt); /* guaranteed to be in same tree */
+
+        if (newpath != null && !newpath.getPath().isEmpty()) {
+            setPathCosts(newpath);
+            if (newpath.getLatency().getValue() <= deltaDelay) {
+                A.add(newpath);
+                log.debug("Found shortest path in costAggregated {}", newpath);
+            
+                //Set the route counts
+                for (Path path : A) {
+                    path.setPathIndex(A.indexOf(path));
+                }
+             
+                return A;
+            }
+        } else {
+            log.debug("No paths found in costAggregated from {} to {}", src, dst);
+        }
+
         return A;
     }
     /****** END *****/
