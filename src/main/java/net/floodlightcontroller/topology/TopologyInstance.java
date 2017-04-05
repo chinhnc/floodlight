@@ -792,7 +792,7 @@ public class TopologyInstance {
         //**** Viet them Get list Switch link to Host   
         ArrayList<String> listSwitch = TopologyManager.getListSwitch();
 //        Long deltaDelay = TopologyManager.getDeltaDelay();
-        Long deltaDelay = 500L;
+        Long deltaDelay = 300L;
         
         listHostsRF = ReadFile.getListHostsFromFile();
         
@@ -801,26 +801,18 @@ public class TopologyInstance {
             Set<DatapathId> dstSws = a.getSwitches();
             log.debug("SRC {}", srcSws);
             log.debug("DST {}", dstSws);
-//			  // thuat toan YEN            
+			  // thuat toan YEN            
 //            for (DatapathId src : srcSws) { /* permute all member switches */
-//            	for (ListHost lhostSrc : listHostsRF) {
-//            		if(lhostSrc.getSwitch().equals(src.toString())) {
-//            			for (DatapathId dst : dstSws) {
-//            				for(ListHost lhostDst : listHostsRF) {
-//            					if(lhostDst.getSwitch().equals(dst.toString())) {
-//            						log.debug("Calling Yens {} {}", src, dst);
-//            						paths = yens(src, dst, TopologyManager.getMaxPathsToComputeInternal(),getArchipelago(src), getArchipelago(dst));                     
-//            						pathId = new PathId(src, dst);
-//            						pathcache.put(pathId, paths);
-//            						log.debug("Adding paths {}", paths);
-//            						log.info("Adding paths {}", paths);
-//            					}
-//            				}
-//            			}
-//            		}
-//            	}
+//    			for (DatapathId dst : dstSws) {
+//					log.debug("Calling Yens {} {}", src, dst);
+//					paths = yens(src, dst, TopologyManager.getMaxPathsToComputeInternal(),getArchipelago(src), getArchipelago(dst));                     
+//					pathId = new PathId(src, dst);
+//					pathcache.put(pathId, paths);
+//					log.debug("Adding paths {}", paths);
+//    			}
 //            }
             
+            //tim duong di giua cac host (chi nhung switch ket noi truc tiep vs host)
 //            for (DatapathId src : srcSws) { /* permute all member switches */
 //            	for (ListHost lhostSrc : listHostsRF) {
 //            		if(lhostSrc.getSwitch().equals(src.toString())) {
@@ -828,7 +820,7 @@ public class TopologyInstance {
 //            				for(ListHost lhostDst : listHostsRF) {
 //            					if(lhostDst.getSwitch().equals(dst.toString())) {
 //                    				//=====LARAC==========
-//                    				Map<Link, Integer> linkCost = caculateCost("GET_COST");
+//                    				Map<Link, Integer> linkCost = calculateCost("GET_COST");
 //                    				Map<Link, Integer> linkDelay = initLinkCostMap();
 //                                    paths = larac(src, dst, linkCost, linkDelay, deltaDelay);
 //                                    
@@ -836,7 +828,7 @@ public class TopologyInstance {
 ////                                    paths = considerEachMetric(src, dst, deltaDelay=1000L);
 //                                    
 //                                    //=======Cost aggregated====================
-////                                    Map<Link, Integer> linkCost = caculateCost("GET_COST");
+////                                    Map<Link, Integer> linkCost = calculateCost("GET_COST");
 ////                                    paths = costAggregated(src, dst, linkCost, deltaDelay=1000L);
 //                                    
 //                                    //=====================================
@@ -851,21 +843,21 @@ public class TopologyInstance {
 //            	}
 //            }
             
-            
+            // can nhap vao de tinh toan duong di
 //            for (DatapathId src : srcSws) {
 //                if(listSwitch.contains(src.toString())) {
 //                	for (DatapathId dst : dstSws) {
 //            			if(listSwitch.contains(dst.toString())) {
-//                            Long deltaDelay = TopologyManager.getDeltaDelay();
 //            				//=====LARAC==========
-//            				Map<Link, Integer> linkCost = caculateCost("GET_COST");
+//            				Map<Link, Integer> linkCost = calculateCost("GET_COST");
+//            				Map<Link, Integer> linkDelay = initLinkCostMap();
 //                            paths = larac(src, dst, linkCost, linkDelay, deltaDelay);
 //                            
 //                            //=======Consider each metric===============
 ////                            paths = considerEachMetric(src, dst, deltaDelay=1000L);
 //                            
 //                            //=======Cost aggregated====================
-////                            Map<Link, Integer> linkCost = caculateCost("GET_COST");
+////                            Map<Link, Integer> linkCost = calculateCost("GET_COST");
 ////                            paths = costAggregated(src, dst, linkCost, deltaDelay=1000L);
 //                            
 //                            //=====================================
@@ -880,19 +872,21 @@ public class TopologyInstance {
             
             // vong for de tinh toan thong so
             int count_switchs = 0;
+            int paths_count = 0;
+            int paths_latency = 0;
             for (DatapathId src : srcSws) {
               	for (DatapathId dst : dstSws) {
               		//=====LARAC==========
-      				Map<Link, Integer> linkCost = caculateCost("GET_COST");
+      				Map<Link, Integer> linkCost = calculateCost("GET_COST");
       				Map<Link, Integer> linkDelay = initLinkCostMap();
-                    paths = larac(src, dst, linkCost, linkDelay, deltaDelay);
+                    paths = larac(src, dst, linkCost, linkDelay, deltaDelay=600L);
                       
                     //=======Consider each metric===============
-//                      paths = considerEachMetric(src, dst, deltaDelay=1000L);
+//                      paths = considerEachMetric(src, dst, deltaDelay=300L);
                       
                     //=======Cost aggregated====================
-//                      Map<Link, Integer> linkCost = caculateCost("GET_COST");
-//                      paths = costAggregated(src, dst, linkCost, deltaDelay=1000L);
+//                      Map<Link, Integer> linkCost = calculateCost("GET_COST");
+//                      paths = costAggregated(src, dst, linkCost, deltaDelay=700L);
                       
                     //=====================================
                     
@@ -902,11 +896,17 @@ public class TopologyInstance {
                     pathId = new PathId(src, dst);
                     pathcache.put(pathId, paths);
                     log.debug("Adding paths {}", paths);
-                    log.info("Adding paths {}", paths);
+//                    log.info("Adding paths {}", paths);
+                    if (!paths.isEmpty() && src.toString().equals("00:00:00:00:00:00:00:01")) {
+                    	paths_count += 1;
+                    	paths_latency += paths.get(0).getLatency().getValue();
+                        log.info("delay of path: {} of {}", paths.get(0).getLatency().getValue(), paths);	
+                    }
   				}
             }
             
-            log.info("So switch khong dc ket noi trung binh voi delta delay {} la {}", deltaDelay, (count_switchs));
+            log.info("So switch khong dc ket noi trung binh voi delta delay {} la {}", deltaDelay, (count_switchs/srcSws.size()));
+            if (paths_count != 0) log.info("Trung binh latency la: {}", paths_latency/paths_count);
         }
     }
     
@@ -1015,10 +1015,12 @@ public class TopologyInstance {
                                 if (link == null) {
                                     continue;
                                 }
-                                c_lambda.put(link, (int)(cost.get(link) + lambda*delay.get(link)));
+                                c_lambda.put(link, (int)(cost.get(link) + Math.abs(lambda)*delay.get(link)));
                             }
                         }
                         /* end compute c_lambda  */
+                        
+//                        log.info("-----------=============lap??? lambda: {}", lambda);
                         
                         bt = dijkstra(copyOfLinkDpidMap, dst, c_lambda, true);
                         aSrc.setBroadcastTree(bt);
@@ -1028,7 +1030,8 @@ public class TopologyInstance {
                             setPathCosts(r);
                             
 //                            if (getPathCosts(r) == getPathCosts(pc)) {
-                            if (Math.abs(getPathCosts(r) - getPathCosts(pc)) <= 50){
+//                            log.info("-----------=============lap??? cost r: {}, cost pc: {}", getPathCosts(r), getPathCosts(pc));
+                            if (Math.abs(getPathCosts(r) - getPathCosts(pc)) <= 100){
                                 setPathCosts(pd);
                                 A.add(pd);
                                 log.debug("Found shortest path in LARAC {}", pd);
@@ -1101,7 +1104,7 @@ public class TopologyInstance {
         }
         
         for(int i = 0; i < METRIC.length; i++) {
-        	Map<Link, Integer> metric = caculateCost(METRIC[i]);
+        	Map<Link, Integer> metric = calculateCost(METRIC[i]);
         	
         	 BroadcastTree bt = dijkstra(copyOfLinkDpidMap, dst, metric, true);
              aSrc.setBroadcastTree(bt);
@@ -1199,16 +1202,7 @@ public class TopologyInstance {
         for (int i = 0; i <= p.getPath().size() - 2; i = i + 2) {
             DatapathId src = p.getPath().get(i).getNodeId();
             DatapathId dst = p.getPath().get(i + 1).getNodeId();
-            OFPort srcPort = p.getPath().get(i).getPortId();
-            OFPort dstPort = p.getPath().get(i + 1).getPortId();
             
-//            for (Link l : links.get(p.getPath().get(i))) {
-//                if (l.getSrc().equals(src) && l.getDst().equals(dst) &&
-//                        l.getSrcPort().equals(srcPort) && l.getDstPort().equals(dstPort)) {
-//                    log.debug("Maitching link found: {}", l);
-//                    cost = cost + l.getLinkCosts();
-//                }
-//            }
             for (LinkCost ls: linkCostsRF) {
     			if (src.toString().equals(ls.getSrc()) && dst.toString().equals(ls.getDst())) {
     				log.debug("Maitching link found: {}", ls);
@@ -1225,7 +1219,7 @@ public class TopologyInstance {
     /*=== END ===*/
     
     /*===== Viet them function Map cost vao tung Link =====*/
-    public Map<Link,Integer> caculateCost(String nameMetric) {
+    public Map<Link,Integer> calculateCost(String nameMetric) {
         Map<Link, Integer> linkCost = new HashMap<Link, Integer>();    
         
         linkCostsRF = ReadFile.getLinkCostsFromFile();

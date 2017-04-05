@@ -58,7 +58,6 @@ import java.util.concurrent.TimeUnit;
 
 import readfile.*;
 import ontology.*;
-import java.util.Scanner;
 
 /**
  * Topology manager is responsible for maintaining the controller's notion
@@ -218,25 +217,15 @@ ITopologyManagerBackend, ILinkDiscoveryListener, IOFMessageListener {
                 log.error("Error in topology instance task thread", e);
             } finally {
             	//**** Viet them
-//            	String[] hosts = TestOutput.getInputFromKeyBoard();
-//            	if (hosts[0] != null && hosts[0] != "") {
-//            		deltaDelay = Long.parseLong(hosts[2]);
-//                	getListSwitch(hosts[0],hosts[1]);
-//                	if (floodlightProviderService.getRole() != HARole.STANDBY) {
-//                        newInstanceTask.reschedule(TOPOLOGY_COMPUTE_INTERVAL_MS, TimeUnit.MILLISECONDS);
-//                    }
-//            	} else {
-//            		if (floodlightProviderService.getRole() != HARole.STANDBY) {
-//                        newInstanceTask.reschedule(TOPOLOGY_COMPUTE_INTERVAL_MS, TimeUnit.MILLISECONDS);
-//                    }
-//            	}
-        		
+            	
+        		//**** cho nhap yeu cau
 //            	String[] hosts = OutputRequest.getInputFromKeyBoard();
 //        		deltaDelay = Long.parseLong(hosts[2]);
 //            	getListSwitch(hosts[0],hosts[1]);
             	//*** END
+            	
                 if (floodlightProviderService.getRole() != HARole.STANDBY) {
-                    newInstanceTask.reschedule(TOPOLOGY_COMPUTE_INTERVAL_MS, TimeUnit.MILLISECONDS);
+                    newInstanceTask.reschedule(100, TimeUnit.MILLISECONDS);
                 }
             }
         }
