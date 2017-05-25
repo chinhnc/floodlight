@@ -843,70 +843,70 @@ public class TopologyInstance {
 //            	}
 //            }
             
-            // can nhap vao de tinh toan duong di
-//            for (DatapathId src : srcSws) {
-//                if(listSwitch.contains(src.toString())) {
-//                	for (DatapathId dst : dstSws) {
-//            			if(listSwitch.contains(dst.toString())) {
-//            				//=====LARAC==========
-//            				Map<Link, Integer> linkCost = calculateCost("GET_COST");
-//            				Map<Link, Integer> linkDelay = initLinkCostMap();
-//                            paths = larac(src, dst, linkCost, linkDelay, deltaDelay);
-//                            
-//                            //=======Consider each metric===============
-////                            paths = considerEachMetric(src, dst, deltaDelay=1000L);
-//                            
-//                            //=======Cost aggregated====================
-////                            Map<Link, Integer> linkCost = calculateCost("GET_COST");
-////                            paths = costAggregated(src, dst, linkCost, deltaDelay=1000L);
-//                            
-//                            //=====================================
-//                            pathId = new PathId(src, dst);
-//                            pathcache.put(pathId, paths);
-//                            log.debug("Adding paths {}", paths);
-//                            log.info("Adding paths {}", paths);
-//            			}
-//                    }
-//                }
-//            }
-            
-            // vong for de tinh toan thong so
-            int count_switchs = 0;
-            int paths_count = 0;
-            int paths_latency = 0;
+//             can nhap vao de tinh toan duong di
             for (DatapathId src : srcSws) {
-              	for (DatapathId dst : dstSws) {
-              		//=====LARAC==========
-      				Map<Link, Integer> linkCost = calculateCost("GET_COST");
-      				Map<Link, Integer> linkDelay = initLinkCostMap();
-                    paths = larac(src, dst, linkCost, linkDelay, deltaDelay=600L);
-                      
-                    //=======Consider each metric===============
-//                      paths = considerEachMetric(src, dst, deltaDelay=300L);
-                      
-                    //=======Cost aggregated====================
-//                      Map<Link, Integer> linkCost = calculateCost("GET_COST");
-//                      paths = costAggregated(src, dst, linkCost, deltaDelay=700L);
-                      
-                    //=====================================
-                    
-                    // tinh toan thong so 
-                    if (paths.isEmpty() && !(src.equals(dst))) count_switchs += 1;
-                    
-                    pathId = new PathId(src, dst);
-                    pathcache.put(pathId, paths);
-                    log.debug("Adding paths {}", paths);
-//                    log.info("Adding paths {}", paths);
-                    if (!paths.isEmpty() && src.toString().equals("00:00:00:00:00:00:00:01")) {
-                    	paths_count += 1;
-                    	paths_latency += paths.get(0).getLatency().getValue();
-                        log.info("delay of path: {} of {}", paths.get(0).getLatency().getValue(), paths);	
+                if(listSwitch.contains(src.toString())) {
+                	for (DatapathId dst : dstSws) {
+            			if(listSwitch.contains(dst.toString())) {
+            				//=====LARAC==========
+            				Map<Link, Integer> linkCost = calculateCost("GET_COST");
+            				Map<Link, Integer> linkDelay = initLinkCostMap();
+                            paths = larac(src, dst, linkCost, linkDelay, deltaDelay);
+                            
+                            //=======Consider each metric===============
+//                            paths = considerEachMetric(src, dst, deltaDelay=1000L);
+                            
+                            //=======Cost aggregated====================
+//                            Map<Link, Integer> linkCost = calculateCost("GET_COST");
+//                            paths = costAggregated(src, dst, linkCost, deltaDelay=1000L);
+                            
+                            //=====================================
+                            pathId = new PathId(src, dst);
+                            pathcache.put(pathId, paths);
+                            log.debug("Adding paths {}", paths);
+                            log.info("Adding paths {}", paths);
+            			}
                     }
-  				}
+                }
             }
             
-            log.info("So switch khong dc ket noi trung binh voi delta delay {} la {}", deltaDelay, (count_switchs/srcSws.size()));
-            if (paths_count != 0) log.info("Trung binh latency la: {}", paths_latency/paths_count);
+            // vong for de tinh toan thong so
+//            int count_switchs = 0;
+//            int paths_count = 0;
+//            int paths_latency = 0;
+//            for (DatapathId src : srcSws) {
+//              	for (DatapathId dst : dstSws) {
+//              		//=====LARAC==========
+//      				Map<Link, Integer> linkCost = calculateCost("GET_COST");
+//      				Map<Link, Integer> linkDelay = initLinkCostMap();
+//                    paths = larac(src, dst, linkCost, linkDelay, deltaDelay=600L);
+//                      
+//                    //=======Consider each metric===============
+////                      paths = considerEachMetric(src, dst, deltaDelay=300L);
+//                      
+//                    //=======Cost aggregated====================
+////                      Map<Link, Integer> linkCost = calculateCost("GET_COST");
+////                      paths = costAggregated(src, dst, linkCost, deltaDelay=700L);
+//                      
+//                    //=====================================
+//                    
+//                    // tinh toan thong so 
+//                    if (paths.isEmpty() && !(src.equals(dst))) count_switchs += 1;
+//                    
+//                    pathId = new PathId(src, dst);
+//                    pathcache.put(pathId, paths);
+//                    log.debug("Adding paths {}", paths);
+////                    log.info("Adding paths {}", paths);
+//                    if (!paths.isEmpty() && src.toString().equals("00:00:00:00:00:00:00:01")) {
+//                    	paths_count += 1;
+//                    	paths_latency += paths.get(0).getLatency().getValue();
+//                        log.info("delay of path: {} of {}", paths.get(0).getLatency().getValue(), paths);	
+//                    }
+//  				}
+//            }
+//            
+//            log.info("So switch khong dc ket noi trung binh voi delta delay {} la {}", deltaDelay, (count_switchs/srcSws.size()));
+//            if (paths_count != 0) log.info("Trung binh latency la: {}", paths_latency/paths_count);
         }
     }
     

@@ -57,7 +57,9 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import readfile.*;
-import ontology.*;
+//import ontology.*;
+import java.net.*;
+import java.io.*;
 
 /**
  * Topology manager is responsible for maintaining the controller's notion
@@ -222,7 +224,31 @@ ITopologyManagerBackend, ILinkDiscoveryListener, IOFMessageListener {
 //            	String[] hosts = OutputRequest.getInputFromKeyBoard();
 //        		deltaDelay = Long.parseLong(hosts[2]);
 //            	getListSwitch(hosts[0],hosts[1]);
+            	
+            	URL oracle;
+            	URLConnection yc;
+				try {
+					oracle = new URL("http://localhost:8089/JAXRSJsonExample/rest/host");
+					yc = oracle.openConnection();
+	                BufferedReader in = new BufferedReader(new InputStreamReader(yc.getInputStream()));
+	                String inputLine;
+	                while ((inputLine = in.readLine()) != null) {
+	                	String[] data = inputLine.split("\"");
+		                deltaDelay = Long.parseLong(data[5]);
+		            	getListSwitch(data[1],data[3]);
+	                }
+	                in.close();
+				} catch (MalformedURLException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+            	
             	//*** END
+            	
+            	
             	
                 if (floodlightProviderService.getRole() != HARole.STANDBY) {
                     newInstanceTask.reschedule(100, TimeUnit.MILLISECONDS);
