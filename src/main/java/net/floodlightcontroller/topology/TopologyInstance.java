@@ -824,12 +824,12 @@ public class TopologyInstance {
 //                    				Map<Link, Integer> linkDelay = initLinkCostMap();
 //                                    paths = larac(src, dst, linkCost, linkDelay, deltaDelay);
 //                                    
-//                                    //=======Consider each metric===============
-////                                    paths = considerEachMetric(src, dst, deltaDelay=1000L);
+//                                    //=======fallback===============
+////                                    paths = fallback(src, dst, deltaDelay=1000L);
 //                                    
-//                                    //=======Cost aggregated====================
+//                                    //=======Multiple quality of service====================
 ////                                    Map<Link, Integer> linkCost = calculateCost("GET_COST");
-////                                    paths = costAggregated(src, dst, linkCost, deltaDelay=1000L);
+////                                    paths = mQoS(src, dst, linkCost, deltaDelay=1000L);
 //                                    
 //                                    //=====================================
 //                                    pathId = new PathId(src, dst);
@@ -853,12 +853,12 @@ public class TopologyInstance {
             				Map<Link, Integer> linkDelay = initLinkCostMap();
                             paths = larac(src, dst, linkCost, linkDelay, deltaDelay);
                             
-                            //=======Consider each metric===============
-//                            paths = considerEachMetric(src, dst, deltaDelay=1000L);
+                            //=======fallback===============
+//                            paths = fallback(src, dst, deltaDelay=1000L);
                             
-                            //=======Cost aggregated====================
+                            //=======Multiple quality of service====================
 //                            Map<Link, Integer> linkCost = calculateCost("GET_COST");
-//                            paths = costAggregated(src, dst, linkCost, deltaDelay=1000L);
+//                            paths = mQoS(src, dst, linkCost, deltaDelay=1000L);
                             
                             //=====================================
                             pathId = new PathId(src, dst);
@@ -881,12 +881,12 @@ public class TopologyInstance {
 //      				Map<Link, Integer> linkDelay = initLinkCostMap();
 //                    paths = larac(src, dst, linkCost, linkDelay, deltaDelay=600L);
 //                      
-//                    //=======Consider each metric===============
-////                      paths = considerEachMetric(src, dst, deltaDelay=300L);
+//                    //=======fallback===============
+////                      paths = fallback(src, dst, deltaDelay=300L);
 //                      
-//                    //=======Cost aggregated====================
+//                    //=======Multiple quality of service====================
 ////                      Map<Link, Integer> linkCost = calculateCost("GET_COST");
-////                      paths = costAggregated(src, dst, linkCost, deltaDelay=700L);
+////                      paths = mQoS(src, dst, linkCost, deltaDelay=700L);
 //                      
 //                    //=====================================
 //                    
@@ -1081,7 +1081,7 @@ public class TopologyInstance {
      * If the path failed, the algorithm tries to find another one for the next metric, 
      * until an appropriate path is found, or the routing fails for all the metrics
      */
-    private List<Path> considerEachMetric(DatapathId src, DatapathId dst, Long deltaDelay) {
+    private List<Path> fallback(DatapathId src, DatapathId dst, Long deltaDelay) {
     	Map<DatapathId, Set<Link>> linkDpidMap = buildLinkDpidMap(switches, portsWithLinks, links);
         Map<DatapathId, Set<Link>> copyOfLinkDpidMap = new HashMap<DatapathId, Set<Link>>(linkDpidMap);
         
@@ -1114,7 +1114,7 @@ public class TopologyInstance {
             	 setPathCosts(newpath);
                  if (newpath.getLatency().getValue() <= deltaDelay) {
                  	A.add(newpath);
-                 	log.debug("Found shortest path in Consider Each Metric {}", newpath);
+                 	log.debug("Found shortest path in fallback {}", newpath);
                  	
                  	//Set the route counts
                      for (Path path : A) {
@@ -1124,12 +1124,12 @@ public class TopologyInstance {
                  	return A;
                  }
              } else {
-            	 log.debug("No paths found in Consider Each Metric with {}", METRIC[i]);
+            	 log.debug("No paths found in fallback with {}", METRIC[i]);
             	 metric.clear();
              }
         }
         
-        log.debug("No paths found in Consider Each Metric's!");
+        log.debug("No paths found in fallback!");
         return A;
     }
     /****** END *****/
@@ -1142,10 +1142,10 @@ public class TopologyInstance {
      * 
      * Thuat toan 3:
      * 
-     * A simple shortest-path algorithm based on a single cost aggregated as a combination of weighted QoS parameters. 
+     * A simple shortest-path algorithm based on a single Multiple quality of service as a combination of weighted QoS parameters. 
      * The main drawback of this solution is that the result is quite sensitive to the selected aggregating weights 
      */
-    private List<Path> costAggregated(DatapathId src, DatapathId dst, Map<Link, Integer> cost, Long deltaDelay) {
+    private List<Path> mQoS(DatapathId src, DatapathId dst, Map<Link, Integer> cost, Long deltaDelay) {
     	Map<DatapathId, Set<Link>> linkDpidMap = buildLinkDpidMap(switches, portsWithLinks, links);
         Map<DatapathId, Set<Link>> copyOfLinkDpidMap = new HashMap<DatapathId, Set<Link>>(linkDpidMap);
         
@@ -1173,7 +1173,7 @@ public class TopologyInstance {
             setPathCosts(newpath);
             if (newpath.getLatency().getValue() <= deltaDelay) {
                 A.add(newpath);
-                log.debug("Found shortest path in costAggregated {}", newpath);
+                log.debug("Found shortest path in mQoS {}", newpath);
             
                 //Set the route counts
                 for (Path path : A) {
@@ -1183,7 +1183,7 @@ public class TopologyInstance {
                 return A;
             }
         } else {
-            log.debug("No paths found in costAggregated from {} to {}", src, dst);
+            log.debug("No paths found in mQoS from {} to {}", src, dst);
         }
 
         return A;
