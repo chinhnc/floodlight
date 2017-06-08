@@ -844,6 +844,7 @@ public class TopologyInstance {
 //            }
             
 //             can nhap vao de tinh toan duong di
+            log.info("request from {} to {}", listSwitch.get(0), listSwitch.get(1));
             for (DatapathId src : srcSws) {
                 if(listSwitch.contains(src.toString())) {
                 	for (DatapathId dst : dstSws) {
@@ -863,8 +864,14 @@ public class TopologyInstance {
                             //=====================================
                             pathId = new PathId(src, dst);
                             pathcache.put(pathId, paths);
+//                            if (!paths.isEmpty() && src.toString().equals("00:00:00:00:00:00:00:01")) {
+//                                log.info("*****delay of path: {} of {}", paths.get(0).getLatency().getValue(), paths);	
+//                            }
                             log.debug("Adding paths {}", paths);
-                            log.info("Adding paths {}", paths);
+//                            log.info("Link delay {}", linkDelay);
+                            if (!paths.isEmpty()) {
+                            	log.info("Adding paths {}", paths);
+                            }
             			}
                     }
                 }

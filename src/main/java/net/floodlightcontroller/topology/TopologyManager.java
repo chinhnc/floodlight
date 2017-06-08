@@ -226,7 +226,7 @@ public class TopologyManager implements IFloodlightModule, ITopologyService, ITo
 				}
 				handleMiscellaneousPeriodicEvents();
 			} catch (Exception e) {
-				log.error("Error in topology instance task thread", e);
+				log.debug("Error in topology instance task thread", e);
 			} finally {
 				// **** Viet them
 
@@ -234,7 +234,7 @@ public class TopologyManager implements IFloodlightModule, ITopologyService, ITo
 				URL oracle;
 				URLConnection yc;
 				try {
-					oracle = new URL("http://localhost:8081/WebserviceRestFul/rest/host");
+					oracle = new URL("http://localhost:8089/WebserviceRestFul/rest/host");
 					yc = oracle.openConnection();
 					BufferedReader in = new BufferedReader(new InputStreamReader(yc.getInputStream()));
 					String inputLine;
