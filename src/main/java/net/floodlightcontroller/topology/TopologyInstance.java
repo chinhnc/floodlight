@@ -845,13 +845,14 @@ public class TopologyInstance {
             
 //             can nhap vao de tinh toan duong di
             log.info("request from {} to {}", listSwitch.get(0), listSwitch.get(1));
+            Map<Link, Integer> linkCost = calculateCost("GET_COST");
+			Map<Link, Integer> linkDelay = initLinkCostMap();
             for (DatapathId src : srcSws) {
                 if(listSwitch.contains(src.toString())) {
                 	for (DatapathId dst : dstSws) {
             			if(listSwitch.contains(dst.toString())) {
             				//=====LARAC==========
-            				Map<Link, Integer> linkCost = calculateCost("GET_COST");
-            				Map<Link, Integer> linkDelay = initLinkCostMap();
+            				
                             paths = larac(src, dst, linkCost, linkDelay, deltaDelay);
                             
                             //=======fallback===============

@@ -258,6 +258,10 @@ public class TopologyManager implements IFloodlightModule, ITopologyService, ITo
 					newInstanceTask.reschedule(1, TimeUnit.MILLISECONDS);
 				}
 			}
+			
+			if (floodlightProviderService.getRole() != HARole.STANDBY) {
+				newInstanceTask.reschedule(1, TimeUnit.MILLISECONDS);
+			}
 		}
 	}
 
